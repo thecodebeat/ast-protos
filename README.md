@@ -125,36 +125,36 @@ The `v1/metadata.proto` file contains protocol buffers that focus on metadata an
 
 These protocol buffers are essential for integrating and managing metadata related to code analysis, bug tracking, test coverage, and pull request handling, providing a standardized way to handle such data across different platforms and tools.
 
-## Współpraca
-Zapraszamy do współracy nad zawartością repozytorium! Jeśli masz pomysły na ulepszenia, dodatkowe funkcje lub poprawki, oto jak możesz pomóc:
+## Contributing
+We welcome contributions to our `.proto` files! If you have ideas for improvements, additional features, or corrections, here's how you can contribute:
 
-### Przed rozpoczęciem
-- Upewnij się, że Twoje zmiany są zgodne z ogólnym projektem i strukturą istniejących plików proto.
-- Każdy plik `.proto` powinien być dobrze udokumentowany za pomocą znaczących komentarzy, które jasno wyjaśniają cel i sposób użycia każdej części struktury.
+### Before You Start
+- Make sure your changes are consistent with the overall design and structure of the existing proto files.
+- Each `.proto` file should be well-documented with meaningful comments that clearly explain the purpose and usage of each part of the structure.
 
-### Strategia tworzenia gałęzi
-- W przypadku jakichkolwiek zmian utwórz nową gałąź od gałęzi `main`.
-- Użyj opisowej nazwy dla swojej gałęzi, która odzwierciedla dokonywaną zmianę. Na przykład, `add-new-field-to-SourceFile` lub `fix-typo-in-Location`.
+### Branching Strategy
+- For any changes, please create a new branch from the `main` branch. 
+- Use a descriptive name for your branch that reflects the change you're making. For example, `add-new-field-to-SourceFile` or `fix-typo-in-Location`.
 
-### Wprowadzanie zmian
-- Dokonuj zmian w swojej gałęzi. Pamiętaj, aby utrzymać swój kod dobrze zorganizowany i skomentowany.
-- Testuj swoje zmiany lokalnie, aby upewnić się, że działają zgodnie z oczekiwaniami i nie wprowadzają nowych problemów.
+### Making Changes
+- Make your changes in your branch. Be sure to keep your code well-organized and commented.
+- Test your changes locally to ensure they are working as expected and do not introduce any new issues.
 
-### Otwieranie pull requesta
-- Gdy Twoje zmiany będą gotowe, wypchnij swoją gałąź do repozytorium.
-- Utwórz żądanie pull request do gałęzi `main`.
-- W opisie swojego pull requesta jasno opisz proponowane zmiany. Dołącz powody zmian i wszelkie dodatkowe konteksty, które mogą być pomocne dla recenzentów.
-- Jeśli Twój pull request jest powiązany z jakimkolwiek otwartym problemem, odnieś się do tego problemu w swoim opisie.
+### Submitting a Pull Request
+- Once your changes are ready, push your branch to the repository.
+- Create a pull request against the `main` branch.
+- In your pull request description, clearly describe the changes you are proposing. Include the reasons for the changes and any additional context that might be helpful for reviewers.
+- If your pull request is related to any open issue, reference that issue in your description.
 
-### Proces przeglądu
-- Opiekunowie repozytorium przejrzą Twój pull request i mogą zaproponować zmiany lub ulepszenia.
-- Angażuj się w proces przeglądu, jeśli pojawią się komentarze lub dyskusje na temat Twojego pull requesta. Twoje zaangażowanie będzie kluczowe, aby Twoje zmiany zostały zintegrowane z gałęzią `main`.
+### Review Process
+- The maintainers will review your pull request and may suggest changes or improvements.
+- Engage in the review process if there are comments or discussions about your pull request. Your involvement will be crucial in getting your changes integrated.
 
-### Scalanie
-- Gdy Twój pull request zostanie zaakceptowany, jeden z opiekunów repozytorium scali je z gałęzią `main`.
-- Po scaleniu Twoja gałąź może być bezpiecznie usunięta.
+### Merging
+- Once your pull request is approved, one of the maintainers will merge it into the `main` branch.
+- After merging, your branch can be safely deleted.
 
-Bardzo cenimy wkład społeczności i uważamy, że może odgrywać kluczową rolę w rozwoju tego projektu. Czekamy na Twoje innowacyjne pomysły i współpracę!
+Your contributions are greatly appreciated and play a vital role in the improvement of this project. We look forward to your innovative ideas and collaboration!
 
 ## License
 
@@ -162,8 +162,8 @@ This project is licensed under the MIT License. The MIT License is a permissive 
 
 For more details, please see the [LICENSE](LICENSE) file in this repository.
 
-## Kontakt
+## Contact
 
-W przypadku pytań, sugestii lub problemów dotyczących tego projektu, proszę korzystać ze strony [GitHub Issues](https://github.com/thecodebeat/ast-protos/issues). Jest to najszybszy sposób, aby uzyskać odpowiedź od opiekunów projektu i pozwala innym użytkownikom czerpać korzyści z dyskusji.
+For questions, suggestions, or issues regarding this project, please use the [GitHub Issues](https://github.com/thecodebeat/ast-protos/issues) page. This is the fastest way to get a response from the project maintainers and allows other users to benefit from the discussion.
 
-Jeśli masz konkretne zapytania lub potrzebujesz dyskusji, która nie mieści się w zakresie GitHub Issues, proszę użyć funkcji [GitHub Discussions](https://github.com/thecodebeat/ast-protos/discussions) dla tego repozytorium. Ta platforma zapewnia bardziej nieformalną przestrzeń do rozmów i zaangażowania społeczności.
+If you have specific queries or require discussion that doesn't fit within the scope of GitHub Issues, please use the [GitHub Discussions](https://github.com/thecodebeat/ast-protos/discussions) feature for this repository. This platform provides a more informal space for conversation and community engagement.
