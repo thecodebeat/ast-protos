@@ -1,0 +1,94 @@
+// Copyright (c) 2018 code quest sp. z o.o.
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+syntax = "proto3";
+
+package codebeat.analyser.v1;
+
+option java_package = "co.codebeat.analyser.proto.v1";
+
+message Node {
+  // Role represents the role(s) of the Node in the AST. This is the most
+  // important thing our analysis algorithms need to know.
+  enum Role {
+    ROOT               = 0; // Virtual root of the the entire project's AST;
+    FILE               = 1; // Single file's root AST;
+    NAMESPACE          = 2; // Namespace (class, struct, module etc);
+    FUNCTION           = 3; // Plain function or a static (class) method;
+    ASSIGNMENT         = 4; // Assignment operator;
+    BRANCH             = 5; // Function/method call;
+    CONDITION          = 6; // Conditional;
+    NESTING            = 7; // (Block) nesting node;
+    ARGUMENT           = 8; // A single function/method arguments;
+    RETURN_VALUE       = 9; // A single return value of a function/method;
+    TERMINAL          = 10; // Terminal node, represented only by it's value;
+    GROUPING          = 11; // Special case of NAMESPACE: grouping of functions;
+    INSTANCE_VARIABLE = 12; // Instance variable inside a namespace;
+    FUNCTION_VERSION  = 13; // One of (potentially) many function versions;
+    CLASS             = 14; // Class is a special type of a NAMESPACE;
+    MODULE            = 15; // Module is a special type of a NAMESPACE;
+    INTERFACE         = 16; // Interface is a special type of a NAMESPACE;
+    ADT               = 17; // ADT (Algebraic Data Type) is a NAMESPACE, too;
+    ADT_MEMBER        = 18; // A single possible value of an ADT;
+    CLASS_VARIABLE    = 19; // Like an instance variable, but worse;
+    ABSTRACT          = 20; // For marking abstract classes/methods
+  } // enum Role
+  repeated Role roles = 1;
+
+  // Type is a language-specific node type, important for determining the code
+  // structure. Terminal nodes generally don't need a type.
+  string type = 2;
+
+  // Value is only set for terminal nodes - identifiers or literals. It is
+  // used for determining the difference between subtrees sharing the same
+  // structure.
+  string value = 3;
+
+  // Name is a fully qualified name of a node but it is only set for select few
+  // node roles, primarily NAMESPACE or FUNCTION. For others it may be empty or
+  // nonsensical.
+  string name = 4;
+
+  // Filename is the name of the file where the Node can be found. Note that
+  // setting the filename on each node is a waste of space so if it's not set
+  // on a given Node you will simply need to go up the ancestry chain to find
+  // the valid filename for your Node. The only case where it might not be set
+  // in the ancestry chain is for fake roots that artificially bind various
+  // subtrees within the scope of one project. Fake roots will have no parents
+  // though so they're easy to spot.
+  string filename = 5;
+
+  // Line number where the node starts. Required for every node.
+  uint32 start_line = 6;
+
+  // Line number where the node ends. Required for every node.
+  uint32 end_line = 7;
+
+  // Children of the current Node. Only empty for terminal/leaf nodes
+  // (identifiers or literals).
+  repeated Node children = 8;
+
+  // Nonduplicable nodes cannot be used as duplication apexes. This is to avoid
+  // useless duplications like one between function signatures in multiple
+  // implementations of the same interface (or with the interface itself).
+  bool nonduplicable = 9;
+
+  // Metadata, content depends on node roles.
+  //
+  /* "class": {
+    "name": class name (string)
+    "inheritance": inheritance symbols ([string])
+    "functions": function name symbols ([string])
+  }
+  */ 
+  map<string, string> metadata = 10;
+} // message Node

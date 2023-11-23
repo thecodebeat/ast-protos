@@ -1,0 +1,98 @@
+// Copyright (c) 2018 code quest sp. z o.o.
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+syntax = "proto3";
+package codebeat.analyser.v1;
+
+option java_package = "co.codebeat.analyser.proto.v1";
+
+import "v1/analyser.proto";
+
+// CodeLocation represents the exact single location in code where something
+// happened. Unlike Location it's not a range but a point.
+message CodeLocation {
+  string path = 1;
+  uint32 line = 2;
+  uint32 column = 3;
+} // message CodeLocation
+
+message BugReport {
+  // Provider denotes a supported platform. We want to provide an identical
+  // interface for all providers but each provider will end up having their own
+  // webhook.
+  enum Provider {
+    INVALID = 0;
+    BUGSNAG = 1;
+  } // enum Provider
+  Provider provider = 1;
+
+  // Exception is the class of exception caught by the provider.
+  string exception = 2;
+
+  // Message is the human-readable message representing the exception.
+  string message = 3;
+
+  // URL field is a link to the bug report on the provider side.
+  string url = 4;
+
+  // Location represents the innermost part of your app where the problem
+  // occurred. Based on this we will assign the blame to the (hopefully) right
+  // namespace.
+  CodeLocation location = 5;
+
+  // Occurrences reporesents the count of identical problems. When problems
+  // happen we increment the counter rather than create new instances.
+  uint32 occurrences = 6;
+
+  // Raw data is optional and can be useful for debugging new integrations.
+  string raw_data = 100;
+} // message BugReport
+
+// CoverageData represents a collection of reports.
+message CoverageData {
+  repeated CoverageReport language_reports = 1;
+}
+
+// CoverageReport gathers data about a language-specific test coverage report.
+message CoverageReport {
+  double covered_percent = 1;
+  string commit_hash = 2;
+  Namespace.Language language = 3;
+}
+
+message PullRequest {
+  // Title is a Pull Request title as set on the provider side.
+  string title = 1;
+
+  // URL of the provider-specific site of a Pull Request.
+  string url = 2;
+
+  // Open denotes the current status of the Pull Request.
+  bool open = 3;
+
+  // Branch represents both source and destination codebase verions of the PR.
+  message Branch {
+    string repo_id = 1;
+    string name = 2;
+    string commit_hash = 3;
+    string clone_url = 4;
+    bool public = 5;
+  }
+  // Source represents Pull Request source (code to be merged).
+  Branch source = 4;
+
+  // Destination represents Pull Request destination (code to be updated).
+  Branch destination = 5;
+
+  // Number of times message was requeued, added for Sidekiq
+  int32 requeue_counter = 6;
+} // message PullRequest

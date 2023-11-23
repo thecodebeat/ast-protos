@@ -1,0 +1,464 @@
+// Copyright (c) 2018 code quest sp. z o.o.
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+syntax = "proto3";
+package codebeat.analyser.v1;
+
+option java_package = "co.codebeat.analyser.proto.v1";
+
+// SourceFile represents a source file in the project.
+message SourceFile {
+  // File path relative to the project root.
+  string path = 1;
+
+  // Cryptographic hash of the file content. This can be used to detect changes
+  // more easily.
+  string content_hash = 2;
+
+  // Content of the file.
+  string content = 3;
+
+  // Indicates whether the file analysis has been successful,
+  bool valid = 4;
+} // message SourceFile
+
+// SupportingFile represents a file in the project which should not be parsed but can be useful as an input to analysis.
+message SupportingFile {
+  // File path relative to the project root.
+  string path = 1;
+
+  // Content of the file.
+  string content = 2;
+} // message SupportingFile
+
+// Location of an entity. Given a SourceFile and a Location it should be
+// possible to retrieve the actual source code.
+message Location {
+  // File path relative to the project root.
+  string path = 1;
+
+  // Start line (inclusive) of the entity.
+  uint32 start_line = 2;
+
+  // End line (inclusive) of the entity.
+  uint32 end_line = 3;
+} // message Location
+
+// Exact Location of an entity. Given a SourceFile and an ExactLocation it should be
+// possible to retrieve the actual source code and highlight the occurrence.
+message ExactLocation {
+  // File path relative to the project root.
+  string path = 1;
+
+  // Start line (inclusive) of the entity.
+  uint32 start_line = 2;
+
+  // Start character (inclusive) of the entity.
+  uint32 start_character = 3;
+
+  // End line (inclusive) of the entity.
+  uint32 end_line = 4;
+
+  // End character (inclusive) of the entity.
+  uint32 end_character = 5;
+} // message ExactLocation
+
+// Severity represents seriousness of an Issue or Similarity.
+enum Severity {
+  NONE     = 0;
+  INFO     = 1;
+  WARNING  = 2;
+  ERROR    = 3;
+  CRITICAL = 4;
+} // enum Severity
+
+// Issue represents a problem with a single piece of code.
+message Issue {
+  enum Type {
+    INVALID            = 0;  // Invalid (default) issue type;
+    ABC                = 1;  // Assignment-Branch-Condition metric too high;
+    ARITY              = 2;  // Too many arguments to a function;
+    BLOCK_NESTING      = 3;  // Block nesting too deep;
+    CYCLO              = 4;  // Cyclomatic complexity too high;
+    LOC                = 5;  // Too many lines of code;
+    RETURN_ARITY       = 6;  // Too many values returned (where applicable);
+    TOTAL_COMPLEXITY   = 7;  // Total complexity (ABC) for namespace too high;
+    TOTAL_LOC          = 8;  // Total number of lines of code too high;
+    TOO_MANY_FUNCTIONS = 9;  // Too many functions in the namespace;
+    SIMILARITY        = 10;  // Code copy pasta;
+    TOO_MANY_IVARS    = 11;  // Too many instance variables;
+  } // enum Type
+} // message Issue
+
+// Similarity is a type of Issue which involves two pieces of code.
+message Similarity {
+  // Mass represents the number of similar AST nodes.
+  uint32 mass = 1;
+
+  // How many non-AST leaves were actually different between two trees.
+  // Difference of 0 means identical code.
+  uint32 difference = 2;
+
+  // Origin of the similarity.
+  Location original = 3;
+
+  // Mirror of the similarity.
+  Location duplicate = 4;
+
+  // Weight of the issue for namespace GPA purposes.
+  double weight = 5;
+
+  // Height indicates how high are both similar trees.
+  uint32 height = 6;
+
+  Severity severity = 7;
+
+  // Structure hash of the similarity. By definition both similar pieces of code
+  // have the same structure hash.
+  string structure_hash = 8;
+} // message Similarity
+
+enum Linter {
+  SWIFTLINT = 0;
+  ESLINT    = 1;
+} // enum Linter
+
+// LintIssue is a problem reported by linter.
+message LintIssue {
+
+  // type e.g. "Force Cast", "Trailing Whitespace"
+  string type = 1;
+
+  // longer description e.g. "Force casts should be avoided.", "Lines should not have trailing whitespace."
+  string reason = 2;
+
+  // Location of the issue.
+  ExactLocation location = 3;
+
+  Severity severity = 4;
+
+  // Linter that produced the issue
+  Linter linter = 5;
+} // message LintIssue
+
+// LintResult is the result of running a linter on a project
+message LintResult {
+  // List of found problems
+  repeated LintIssue issues = 1;
+} // message LintResult
+
+message BrakemanIssue {
+  string warning_type       = 1;
+  string message            = 2;
+  string file               = 3;
+  uint32 line               = 4;
+  string code               = 5;
+  string confidence         = 6;
+} // message BrakemanIssue
+
+message BrakemanResult {
+  repeated BrakemanIssue issues = 1;
+} // message BrakemanResult
+
+// GenericIssue is a problem reported by experimental metrics.
+message GenericIssue {
+
+  // type of issue
+  Type type = 1;
+
+  // issue description
+  string reason = 2;
+
+  enum Type {
+    DEFAULT           = 0;
+    MODULES_COUNT     = 1;
+    AVG_METHODS_COUNT = 2;
+    DEBUG = 3;
+    CLASS_EXTERNAL_REFERENCES = 4;
+    CLASS_CHILDREN_COUNT = 5;
+    CLASS_EFFERENT_COUPLING = 6;
+    CLASS_AFFERENT_COUPLING = 7;
+    CLASS_INSTABILITY = 8;
+    INHERITANCE_DEPTH = 9;
+    INHERITANCE_TREE_IMPURITY = 10;
+    ABSTRACTNESS = 11;
+  }
+} // message GenericIssue
+
+// Namespace represents a flattened entity on which functions can be defined.
+// Details of what constitutes a namespace are language-specific:
+// - in Ruby: both modules and classes;
+// - in Go: packages;
+message Namespace {
+  // Language of a namespace. Note that we don't need to ever support any
+  // particular language from this list - they can be only used for analytical
+  // purposes to understand what would bring value to our customers.
+  enum Language {
+    INVALID      = 0;
+    RUBY         = 1;
+    GOLANG       = 2;
+    SWIFT        = 3;
+    OBJC         = 4;
+    JAVASCRIPT   = 5;
+    JAVA         = 6;
+    PYTHON       = 7;
+    PHP          = 8;
+    CPP          = 9;
+    PLAINC       = 10;
+    CSHARP       = 11;
+    HASKELL      = 12;
+    ERLANG       = 13;
+    SCALA        = 14;
+    ELIXIR       = 15;
+    JULIA        = 16;
+    RUST         = 17;
+    COFFEESCRIPT = 18;
+    TYPESCRIPT   = 19;
+    DART         = 20;
+    KOTLIN       = 21;
+    ELM          = 22;
+    C            = 23;
+    OTHER        = 99;
+  } // enum Language
+  Language language = 8;
+
+  // Fully qualified namespace name.
+  string name = 1;
+
+  // GPA of the namespace.
+  double gpa = 2;
+
+  // All the locations where a given namespace can be found. It is entirely
+  // possible for a single namespace to span multiple files.
+  repeated Location locations = 3;
+
+  // List of similarity issues.
+  repeated Similarity similarities = 5;
+
+  // Structure hash of the namespace.
+  string structure_hash = 10;
+
+  // Metric represents namespace-level metric.
+  message Metric {
+    enum Type {
+      INVALID            = 0; // Invalid zero value;
+      ABC_SIZE           = 1; // Total Assignment-Branch-Condition size;
+      LINES_OF_CODE      = 2; // Total number of lines of code inside functions;
+      FUNCTIONS          = 3; // Total number of functions;
+      INSTANCE_VARIABLES = 4; // Total number of instance variables;
+    } // enum Type
+    Type type = 1;
+
+    // Value is an absolute value for a given metric.
+    double value = 2;
+
+    // Severity is the backend interpretation of that value. Not sure if we care
+    // though, or do we want to process that 100% on the frontend in the future.
+    Severity severity = 3;
+  } // message Metric
+  repeated Metric metrics = 11;
+
+  // Function is a named procedure within a particular namespace.
+  message Function {
+    // Signature represents a globally unique name of the procedure, including
+    // its argument types if the namespace is in a language that allows function
+    // overloading.
+    string signature = 1;
+
+    // Locations of the Function. For multibody functions there can be more
+    // than one location.
+    repeated Location locations = 2;
+
+    // Structure hash of the function.
+    string structure_hash = 3;
+
+    // Metric represents a function-level metric.
+    message Metric {
+      enum Type {
+        INVALID       = 0;  // Invalid (default) issue type;
+        ABC_SIZE      = 1;  // Assignment-Branch-Condition size;
+        ARITY         = 2;  // Number of arguments to a function;
+        BLOCK_NESTING = 3;  // Maximum block nesting;
+        CYCLO         = 4;  // Cyclomatic complexity;
+        LINES_OF_CODE = 5;  // Total number of lines of code;
+        RETURN_VALUES = 6;  // Number of values returned;
+      }
+      Type type = 1;
+
+      // Value is an absolute value for a given metric.
+      double value = 2;
+
+      // Severity is the backend interpretation of that value. Not sure if we
+      // care though, or do we want to process that 100% on the frontend in the
+      // care.
+      Severity severity = 3;
+    } // message Metric
+    repeated Metric metrics = 4;
+  } // message Function
+  repeated Function functions = 12;
+
+  repeated LintIssue lint_issues = 13;
+} // message Namespace
+
+// Report represents a result of an analysis.
+message Report {
+  // Namespaces in this report. If there is anything in the code that is not
+  // strictly namespaced there can exists a root namespace which can host these.
+  repeated Namespace namespaces = 1;
+
+  // SourceFiles analysed within the scope of this Report.
+  repeated SourceFile source_files = 2;
+
+  // SupportingFiles useful as an input to analysis of this Report.
+  repeated SupportingFile supporting_files = 3;
+
+  // Issues generated by experimental metrics.
+  repeated GenericIssue generic_issues = 4;
+
+  // Issues generated by brakeman gem.
+  repeated BrakemanIssue brakeman_issues = 5;
+} // message Report
+
+message Error {
+  enum Type {
+    INVALID     = 0;  // Invalid error type, should not be used;
+    TIMEOUT     = 1;  // Analysis timeout out somewhere along the way;
+    FETCHING    = 2;  // Problem with fetching the Git repo;
+    INPUT       = 3;  // Analysis error - bad input.
+    APPLICATION = 4;  // Analysis error - application failure.
+  }
+  Type type = 1;
+
+  // User-friendly error message.
+  string message = 2;
+
+  // Stack trace for debugging purposes.
+  string stack_trace = 3;
+} // message Error
+
+// Timestamps is a collection of UNIX timestamps for determining when various
+// analysis steps are happening and - consequently - how long they take.
+message Timestamps {
+  // Filled in by the frontend when analysis is being requested.
+  uint64 analysis_requested_ts = 1;
+
+  // Filled in by the analyser when analysis starts.
+  uint64 analysis_started_ts = 2;
+
+  // Filled in by the analyser when analysis finishes.
+  uint64 analysis_finished_ts = 3;
+} // message Timestamps
+
+// GitDetails represents access details to the source code via Git.
+message GitDetails {
+  // URL of the repository - can be git@, ssh:// or https://
+  string repo_url = 1;
+
+  // Branch to clone and analyse.
+  string branch = 2;
+
+  // Private SSH key to use while communicating with the repo. Not used for
+  // HTTP transport.
+  string private_key = 3;
+} // message GitDetails
+
+// Request to analyse a given repo.
+message Request {
+  // UUID is designed to prevent race conditions where multiple analyses are
+  // running for a project and older requests that for whatever reason take
+  // longer to finish override new requests. What we can do is keep the latest
+  // UUID on the Project level and ignore any incoming analysis results that are
+  // have a different UUID.
+  string uuid = 1;
+
+  // Timestamps related to this Request.
+  Timestamps timestamps = 2;
+
+  // Various types of access details to the repo.
+  GitDetails git_details = 3;
+
+  // Indicates that the request is for a commit (not default branch).
+  bool commit = 4;
+
+  // Various types of access details to the repo;
+  repeated Namespace.Language supported_languages = 100;
+} // message Request
+
+// Response with project analysis.
+message Analysis {
+  // Original request for which this analysis has been performed.
+  // Since the frontend is the one indiscriminately receiving analysis results
+  // it can use the original request to tie the result of the analysis to the
+  // right project.
+  Request request = 1;
+
+  // Error, if any.
+  Error error = 3;
+
+  // Commit represents info about the last version of the code being analysed.
+  message Commit {
+    // Hash represents the version of the code being analysed.
+    string hash = 1;
+
+    // Message represents the latest log message associated with the commit.
+    string message = 2;
+
+    // Author is the email of the committer of the last commit.
+    string author = 3;
+  } // message Commit
+  Commit commit = 6;
+} // message Analysis
+
+// Preferences is the set of analysis preferences which affect how the project
+// is analysed. The idea is to have this data structure language-agnostic to
+// move from backend-driven preferences to frontend-driven preferences where the
+// backend is totally oblivious to user settings and prefences and just returns
+// bare numbers which the frontend then interprets.
+message Preferences {
+  // Thresholds represent language-specific settings on how
+  message Thresholds {
+    // Language for which this set of thresholds is applied.
+    Namespace.Language language = 1;
+
+    // Levels represents starting values of various issue levels.
+    message Levels {
+      // Starting value for the INFO severity.
+      double info = 1;
+
+      // Starting value for the WARNING severity.
+      double warning = 2;
+
+      // Starting value for the ERROR severity.
+      double error = 3;
+
+      // Starting value for the CRITICAL severity.
+      double critical = 4;
+    } // message Levels
+
+    // NamespaceLevels represents starting values for namespace-level issues.
+    // Each issue type can have its own NamespaceLevels structure.
+    message NamespaceLevels {
+      Namespace.Metric.Type type = 1;
+      Levels levels = 2;
+    } // message NamespaceLevels
+    repeated NamespaceLevels namespace_levels = 2;
+
+    // FunctionLevels represents starting values for function-level issues.
+    // Each issue type can have its own FunctionLevels structure.
+    message FunctionLevels {
+      Namespace.Function.Metric.Type type = 1;
+      Levels levels = 2;
+    }
+    repeated FunctionLevels function_levels = 3;
+  } // message Thresholds
+  repeated Thresholds thresholds = 1;
+} // message Preferences
